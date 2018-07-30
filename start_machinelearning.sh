@@ -8,12 +8,12 @@ cd $CUR_DIR
 
 
 # the source image
-image_from="ubuntu:16:04"
+image_from="pytorch_dev"
 
 # this docker's image
-docker_image="ubuntu_dev_image"
+docker_image="machinelearning_image"
 # the container's name
-docker_container="ubuntu_dev"
+docker_container="machinelearning"
 
 # path mapping for host<->docker
 path_mapping="-v /home:/home -v $CUR_DIR:/data"

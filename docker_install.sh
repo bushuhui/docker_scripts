@@ -39,7 +39,7 @@ echo ""; echo ""
 # Ubuntu 16.04 (xenial); LinuxMint 18.3 (sylvia), 18.2 (sonya), 18.1 (serena), 18 (sarah)
 list_xenial="xenial sylvia sonya serena sarah"
 for i in $list_xenial; do 
-    if [[ "SYS_TYPE" = "$i" ]]; then
+    if [[ "$SYS_TYPE" = "$i" ]]; then
         sudo add-apt-repository "deb [arch=amd64] https://mirrors.aliyun.com/docker-ce/linux/ubuntu xenial stable"
     fi
 done
@@ -47,7 +47,7 @@ done
 # Ubuntu 14.04 (trusty); LinuxMint 17.3 (rosa), 17.2 (rafaela), 17.1 (rebecca), 17 (qiana)
 list_trusty="trusty rosa rafaela rebecca qiana"
 for i in list_trusty; do 
-    if [[ "SYS_TYPE" = "$i" ]]; then
+    if [[ "$SYS_TYPE" = "$i" ]]; then
         sudo add-apt-repository "deb [arch=amd64] https://mirrors.aliyun.com/docker-ce/linux/ubuntu trusty stable"
     fi
 done

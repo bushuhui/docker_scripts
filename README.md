@@ -18,3 +18,7 @@ pip3 install torchvision
 ```
 
 
+## using docker registry
+
+please refer [docker registry usage](docs/docker_registry.md)
+
