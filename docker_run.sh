@@ -1,14 +1,51 @@
 #!/bin/bash
 
+###############################################################################
+###############################################################################
 # Absolute path to this script, e.g. /home/user/bin/foo.sh
 SCRIPT=$(readlink -f "$0")
 CUR_DIR=$(dirname "$SCRIPT")
 
 
 ###############################################################################
+###############################################################################
+
+print_usage()
+{
+cat << EOF
+Usage: 
+    ${0##*/} 
+        [-r] [-b] [-d] [-h]
+        [-i IMAGE] [-s SOURCE IMAGE] [-c CONTAINER] 
+        [-m PATH_MAPPING]
+        [--commit true/false] 
+        [--rm_container true/false]
+
+Create/Run/Delete docker container from image
+
+  Acts:
+    -r, --run           Run the container
+    -b, --build         Build a docker image from given image
+    -d, --delete        Delete a docker container
+  
+    -h, --help          Display this help and exit.
+
+  Opts:
+    -i, --image         Required. Set the name of the image.
+    -s, --source        Required. Set the source image
+    -c, --container     Required. Set the container name
+    -m, --mapping       Required. Path mapping (host<->docker)
+    --commit            Auto commit docker container to image (Default: true)
+    --rm_container      Auto remove docker container (Default: true)
+    
+EOF
+}
+
+
+###############################################################################
 # Default settings
 ###############################################################################
-if [[ ! -n "$included" ]]; then
+if [[ -z "$included" ]]; then
     # the source image
     image_from="ubuntu"
 
@@ -18,13 +55,14 @@ if [[ ! -n "$included" ]]; then
     docker_container=""
 
     # path mapping for host<->docker
-    path_mapping="-v /home:/home -v $CUR_DIR:/data"
+    user_pwd=`pwd`
+    path_mapping="-v /home:/home -v $user_pwd:/data"
 
 
     # commit docker container to image
     opt_commit_dockerimage="true"
     # auto remove docker container
-    opt_auto_rm_container="true"
+    opt_rm_container="true"
 fi
 
 ###############################################################################
@@ -63,7 +101,7 @@ build_docker_image()
     docker commit $docker_container $docker_image
     
     # auto rm docker container
-    if [[ "$opt_auto_rm_container" = "true" ]]; then
+    if [[ "$opt_rm_container" = "true" ]]; then
         docker rm $docker_container
     fi
 }
@@ -90,7 +128,7 @@ run_docker_container()
         fi
         
         # auto rm docker container
-        if [[ "$opt_auto_rm_container" = "true" ]]; then
+        if [[ "$opt_rm_container" = "true" ]]; then
             docker rm $docker_container
         fi
     else
@@ -118,44 +156,11 @@ rm_docker_container()
 }
 
 
-
 ###############################################################################
 ###############################################################################
-
-print_usage()
-{
-cat << EOF
-Usage: 
-    ${0##*/} 
-        [-r] [-b] [-d] [-h]
-        [-i IMAGE] [-s SOURCE IMAGE] [-c CONTAINER] 
-        [-m PATH_MAPPING]
-        [--commit true/false] 
-        [--auto_rm_container true/false]
-
-Create/Run/Delete docker container from image
-
-  Acts:
-    -r, --run           Run the container
-    -b, --build         Build a docker image from given image
-    -d, --delete        Delete a docker container
-  
-    -h, --help          Display this help and exit.
-
-  Opts:
-    -i, --image         Required. Set the name of the image.
-    -s, --source        Required. Set the source image
-    -c, --container     Required. Set the container name
-    -m, --mapping       Required. Path mapping (host<->docker)
-    --commit            Commit docker container to image (Default: true)
-    --auto_rm_container Auto remove docker container (Default: true)
-    
-EOF
-}
-
 
 # parse input arguments
-params="$(getopt -o rbdhi:s:c:m: -l run,build,delete,help,image:,source:,container:,mapping:,commit:,auto_rm_container: --name "$0" -- "$@")"
+params="$(getopt -o rbdhi:s:c:m: -l run,build,delete,help,image:,source:,container:,mapping:,commit:,rm_container: --name "$0" -- "$@")"
 eval set -- "$params"
 act="run"
 
@@ -168,15 +173,12 @@ while [[ $# -gt 0 ]] ; do
             
         -r|--run)  
             act="run"
-            shift
             ;;
         -b|--build)
             act="build"
-            shift
             ;;
         -d|--delete)
             act="delete"
-            shift
             ;;
             
         -i|--image)
@@ -208,25 +210,26 @@ while [[ $# -gt 0 ]] ; do
                 opt_commit_dockerimage=$2
                 shift
             fi            
-            shift
             ;;
-        --auto_rm_container)
+        --rm_container)
             if [ -n "$2" ]; then
-                opt_auto_rm_container=$2
+                opt_rm_container=$2
                 shift
-            fi            
-            shift
+            fi
             ;;
     esac
+    
     shift
 done
 
 # set default docker container name
-if [[ ! -n "$docker_container" ]]; then
+if [[ -z "$docker_container" ]]; then
     docker_container="${docker_image}_container"
 fi
 
-if [[ -n "$DEBUG" ]]; then
+# print arguments
+#DEBUG="true"
+if [[ "$DEBUG" = "true" ]]; then
 echo ">>> Parameters:"
 echo "  image_from              : $image_from"
 echo "  docker_image            : $docker_image"
@@ -234,7 +237,7 @@ echo "  docker_container        : $docker_container"
 echo ""
 echo "  path_mapping            : $path_mapping"
 echo "  opt_commit_dockerimage  : $opt_commit_dockerimage"
-echo "  opt_auto_rm_container   : $opt_auto_rm_container"
+echo "  opt_rm_container   : $opt_rm_container"
 echo ""
 fi
 

@@ -17,7 +17,8 @@ docker_container=""
 
 
 # path mapping for host<->docker
-path_mapping="-v /home:/home -v $CUR_DIR:/data"
+user_pwd=`pwd`
+path_mapping="-v /home:/home -v $user_pwd:/data"
 
 # commit docker container to image
 opt_commit_dockerimage="true"

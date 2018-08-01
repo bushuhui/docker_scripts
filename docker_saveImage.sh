@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# save odm_dev image
-#docker commit odm odm_dev
-#docker save odm_dev -o odm_dev.tar
+# command example: save odm_dev image
+#   docker commit odm_dev_container odm_dev
+#   docker save odm_dev -o odm_dev.tar
 
 docker_container=""
 docker_image=""
@@ -44,7 +44,8 @@ EOF
 # parse input arguments
 params="$(getopt -o hi:c: -l image:,container: --name "$0" -- "$@")"
 eval set -- "$params"
-act=""
+
+save_container=""
 
 while [[ $# -gt 0 ]] ; do
     case $1 in
@@ -57,6 +58,11 @@ while [[ $# -gt 0 ]] ; do
         -i|--image)
             if [ -n "$2" ]; then
                 docker_image=$2
+                
+                if [[ ! -n "$docker_container" ]]; then
+                    docker_container="${docker_image}_container"
+                fi
+                
                 shift
             fi
             ;;
@@ -64,18 +70,17 @@ while [[ $# -gt 0 ]] ; do
             if [ -n "$2" ]; then
                 docker_container=$2
                 
-                if [[ ! -n "$docker_image" ]]; then
-                    docker_image="${docker_container}_image"
-                fi
-                
                 shift
             fi
+            
+            save_container="true"
             ;;
     esac
     shift
 done
 
-if [[ -n "$docker_container" ]]; then
+
+if [[ -n "$save_container" ]]; then
     save_docker_container
 else
     if [[ -n "$docker_image" ]]; then
@@ -85,3 +90,4 @@ else
         exit 0
     fi
 fi
+
