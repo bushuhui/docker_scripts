@@ -20,6 +20,7 @@ Usage:
         [-m PATH_MAPPING]
         [--commit true/false] 
         [--rm_container true/false]
+        [--nvidia]
 
 Create/Run/Delete docker container from image
 
@@ -37,6 +38,7 @@ Create/Run/Delete docker container from image
     -m, --mapping       Required. Path mapping (host<->docker)
     --commit            Auto commit docker container to image (Default: true)
     --rm_container      Auto remove docker container (Default: true)
+    --nvidia            Run as nvidia-docker2 (Default: not set)
     
 EOF
 }
@@ -63,6 +65,8 @@ if [[ -z "$included" ]]; then
     opt_commit_dockerimage="true"
     # auto remove docker container
     opt_rm_container="true"
+    # nvidia-docker2 or not
+    opt_nvidia_docker2="false"
 fi
 
 ###############################################################################
@@ -89,9 +93,16 @@ build_docker_image()
         exit -1
     fi
     
+    # get nvidia-docker2 opts
+    nvidia_docker_opts=""
+    if [[ "$opt_nvidia_docker2" = "true" ]]; then
+        nvidia_docker_opts="--runtime=nvidia"
+    fi
+    
     # run the docker from given source image
     xhost +
-    docker run -it -h "$docker_image" \
+    docker run -it $nvidia_docker_opts \
+            -h "$docker_image" \
             --net=host --privileged \
             -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
             $path_mapping \
@@ -114,8 +125,16 @@ run_docker_container()
     # check container is exist & run the container
     C=`docker ps -a | grep $docker_container`
     if [[ "$C" = "" ]]; then
+    
+        # get nvidia-docker2 opts
+        nvidia_docker_opts=""
+        if [[ "$opt_nvidia_docker2" = "true" ]]; then
+            nvidia_docker_opts="--runtime=nvidia"
+        fi
+        
         xhost +
-        docker run -it -h "$docker_image" \
+        docker run -it $nvidia_docker_opts \
+            -h "$docker_image" \
             --net=host --privileged \
             -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
             $path_mapping \
@@ -160,7 +179,7 @@ rm_docker_container()
 ###############################################################################
 
 # parse input arguments
-params="$(getopt -o rbdhi:s:c:m: -l run,build,delete,help,image:,source:,container:,mapping:,commit:,rm_container: --name "$0" -- "$@")"
+params="$(getopt -o rbdhi:s:c:m: -l run,build,delete,help,image:,source:,container:,mapping:,commit:,rm_container:,nvidia --name "$0" -- "$@")"
 eval set -- "$params"
 act="run"
 
@@ -217,6 +236,9 @@ while [[ $# -gt 0 ]] ; do
                 shift
             fi
             ;;
+        --nvidia)
+            opt_nvidia_docker2="true"
+            ;;
     esac
     
     shift
@@ -237,7 +259,8 @@ echo "  docker_container        : $docker_container"
 echo ""
 echo "  path_mapping            : $path_mapping"
 echo "  opt_commit_dockerimage  : $opt_commit_dockerimage"
-echo "  opt_rm_container   : $opt_rm_container"
+echo "  opt_rm_container        : $opt_rm_container"
+echo "  opt_nvidia_docker2      : $opt_nvidia_docker2"
 echo ""
 fi
 
