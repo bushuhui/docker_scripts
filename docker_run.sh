@@ -4,25 +4,36 @@
 SCRIPT=$(readlink -f "$0")
 CUR_DIR=$(dirname "$SCRIPT")
 
-cd $CUR_DIR
+
+###############################################################################
+# Default settings
+###############################################################################
+if [[ ! -n "$included" ]]; then
+    # the source image
+    image_from="ubuntu"
+
+    # this docker's image
+    docker_image="ubuntu_dev"
+    # the container's name
+    docker_container=""
+
+    # path mapping for host<->docker
+    path_mapping="-v /home:/home -v $CUR_DIR:/data"
 
 
-# the source image
-image_from="ubuntu:16:04"
+    # commit docker container to image
+    opt_commit_dockerimage="true"
+    # auto remove docker container
+    opt_auto_rm_container="true"
+fi
 
-# this docker's image
-docker_image="ubuntu_dev_image"
-# the container's name
-docker_container="ubuntu_dev"
-
-# path mapping for host<->docker
-path_mapping="-v /home:/home -v $CUR_DIR:/data"
-
+###############################################################################
+###############################################################################
 
 # build a docker image from a source image
 build_docker_image()
 {
-    echo ">>> Build a docker image [$docker_image] from [$image_from]\n"; echo ""
+    echo ">>> Build a docker image [$docker_image] from [$image_from]"; echo ""
     
     # check container is exist
     C=`docker ps -a | grep $docker_container`
@@ -40,9 +51,9 @@ build_docker_image()
         exit -1
     fi
     
-    
+    # run the docker from given source image
     xhost +
-    docker run -it -h "$docker_container" \
+    docker run -it -h "$docker_image" \
             --net=host --privileged \
             -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
             $path_mapping \
@@ -50,7 +61,11 @@ build_docker_image()
             bash
 
     docker commit $docker_container $docker_image
-    docker rm $docker_container
+    
+    # auto rm docker container
+    if [[ "$opt_auto_rm_container" = "true" ]]; then
+        docker rm $docker_container
+    fi
 }
 
 # run the docker image
@@ -62,15 +77,22 @@ run_docker_container()
     C=`docker ps -a | grep $docker_container`
     if [[ "$C" = "" ]]; then
         xhost +
-        docker run -it -h "$docker_container" \
+        docker run -it -h "$docker_image" \
             --net=host --privileged \
             -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
             $path_mapping \
             --name $docker_container $docker_image \
             bash
 
-        docker commit $docker_container $docker_image
-        docker rm $docker_container
+        # commit docker container to image
+        if [[ "$opt_commit_dockerimage" = "true" ]]; then
+            docker commit $docker_container $docker_image
+        fi
+        
+        # auto rm docker container
+        if [[ "$opt_auto_rm_container" = "true" ]]; then
+            docker rm $docker_container
+        fi
     else
         echo "Please press [Enter] to see the prompt!"
         docker start  $docker_container
@@ -85,20 +107,31 @@ rm_docker_container()
     
     C=`docker ps -a | grep $docker_container`
     if [[ -n "$C" ]]; then
-        docker commit $docker_container $docker_image
+        # commit docker container to image
+        if [[ "$opt_commit_dockerimage" = "true" ]]; then
+            docker commit $docker_container $docker_image
+        fi
+        
+        # remove given continer
         docker rm $docker_container
     fi
 }
 
 
 
+###############################################################################
+###############################################################################
+
 print_usage()
 {
 cat << EOF
 Usage: 
-    ${0##*/} [-r] [-b] [-d] [-h]
-                [-i IMAGE] [-s SOURCE IMAGE] [-c CONTAINER] 
-                [-m PATH_MAPPING]
+    ${0##*/} 
+        [-r] [-b] [-d] [-h]
+        [-i IMAGE] [-s SOURCE IMAGE] [-c CONTAINER] 
+        [-m PATH_MAPPING]
+        [--commit true/false] 
+        [--auto_rm_container true/false]
 
 Create/Run/Delete docker container from image
 
@@ -114,13 +147,15 @@ Create/Run/Delete docker container from image
     -s, --source        Required. Set the source image
     -c, --container     Required. Set the container name
     -m, --mapping       Required. Path mapping (host<->docker)
+    --commit            Commit docker container to image (Default: true)
+    --auto_rm_container Auto remove docker container (Default: true)
     
 EOF
 }
 
 
 # parse input arguments
-params="$(getopt -o rbdhi:s:c:m: -l run,build,delete,help,image:,source:,container:,mapping --name "$0" -- "$@")"
+params="$(getopt -o rbdhi:s:c:m: -l run,build,delete,help,image:,source:,container:,mapping:,commit:,auto_rm_container: --name "$0" -- "$@")"
 eval set -- "$params"
 act="run"
 
@@ -168,11 +203,42 @@ while [[ $# -gt 0 ]] ; do
                 shift
             fi
             ;;
+        --commit)
+            if [ -n "$2" ]; then
+                opt_commit_dockerimage=$2
+                shift
+            fi            
+            shift
+            ;;
+        --auto_rm_container)
+            if [ -n "$2" ]; then
+                opt_auto_rm_container=$2
+                shift
+            fi            
+            shift
+            ;;
     esac
     shift
 done
 
+# set default docker container name
+if [[ ! -n "$docker_container" ]]; then
+    docker_container="${docker_image}_container"
+fi
 
+if [[ -n "$DEBUG" ]]; then
+echo ">>> Parameters:"
+echo "  image_from              : $image_from"
+echo "  docker_image            : $docker_image"
+echo "  docker_container        : $docker_container"
+echo ""
+echo "  path_mapping            : $path_mapping"
+echo "  opt_commit_dockerimage  : $opt_commit_dockerimage"
+echo "  opt_auto_rm_container   : $opt_auto_rm_container"
+echo ""
+fi
+
+# do action
 case $act in
     build)  build_docker_image;;
     run)    run_docker_container;;
