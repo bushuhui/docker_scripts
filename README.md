@@ -8,12 +8,12 @@
 * `docker_loadImage.sh`: 将本地文件恢复到docker系统
 * `docker_run.sh`: 创建/运行/删除docker执行环境
 
-## 安装docker
+## 1. 安装docker
 直接执行`./docker_install.sh`就可以，如果有问题，在 http://192.168.1.3/PI_LAB/docker_scripts/issues 反馈意见
 
 如果希望在docker使用nvidia显卡，则需要安装nvidia-docker2，可以执行`docker_install_nvidia-docker2.sh`
 
-## 创建一个docker镜像
+## 2. 创建一个docker镜像
 
 由于`docker build`需要网络访问，所以网络上大多数教程的例子无法使用（可能是我的那个配置没有搞对）。所以构建一个交互的docker，在环境里面进行安装软件等操作。
 
@@ -27,7 +27,7 @@
 ./docker_run.sh -b -i ubuntu_test -s ubuntu_dev
 ```
 
-## 运行一个docker镜像
+## 3. 运行一个docker镜像
 
 为了能够使用图形化的程序，使用`docker_run.sh`能够自动设置一些常用的配置
 
@@ -43,7 +43,7 @@
 
 执行命令之后，会进入交互命令环境，如果按`ctrl-d`推出docker运行之后，会自动将container内容提交到docker image，并删除container。
 
-### 关于`-m`本地文件和docker文件分享的设置
+### 3.1 关于`-m`本地文件和docker文件分享的设置
 * 其中的`-v`表示一个目录映射
 * 后面跟上 `host_dir:docker_dir`
  * `host_dir`就是本机的目录
@@ -60,7 +60,20 @@ docker_run.sh -m "-v /mnt/a409:/a409"
 ```
 
 
-## docker镜像仓库的使用
+### 3.2 设置alias加快命令的执行
+
+每次都输入比较长的命令效率不高，因此可以将常用的命令设置成alias，这样方便使用
+
+例如在 `~/.bashrc`中加入下述设置，就可以仅仅输入别名`docker_run_ubuntu_dev`就能执行
+```
+alias docker_run_ubuntu_dev='/script_path/docker_run.sh -i ubuntu_dev -m "-v /home:/home -v /mnt/a409:/a409"'
+```
+
+需要注意的是，加入到`~/.bashrc`之后，需要关闭终端，再次打开一个新的终端设置的别名才能起作用
+
+
+
+## 4. docker镜像仓库的使用
 
 本地修改后的镜像可以通过`docker push`到本地的仓库，方便大家分享。具体使用方法可以参考[docker registry usage](docs/docker_registry.md)
 
