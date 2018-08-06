@@ -16,6 +16,7 @@ cat << EOF
 Usage: 
     ${0##*/} 
         [-r] [-b] [-d] [-h]
+        [--repo] [--pull]
         [-i IMAGE] [-s SOURCE IMAGE] [-c CONTAINER] 
         [-m PATH_MAPPING]
         [--commit true/false] 
@@ -28,6 +29,9 @@ Create/Run/Delete docker container from image
     -r, --run           Run the container
     -b, --build         Build a docker image from given image
     -d, --delete        Delete a docker container
+    
+    --repo              List registry repositories
+    --pull              Pull a registry image
   
     -h, --help          Display this help and exit.
 
@@ -67,6 +71,9 @@ if [[ -z "$included" ]]; then
     opt_rm_container="true"
     # nvidia-docker2 or not
     opt_nvidia_docker2="false"
+    
+    # regitry server address
+    opt_registry_server="192.168.1.3:5000"
 fi
 
 ###############################################################################
@@ -179,7 +186,7 @@ rm_docker_container()
 ###############################################################################
 
 # parse input arguments
-params="$(getopt -o rbdhi:s:c:m: -l run,build,delete,help,image:,source:,container:,mapping:,commit:,rm_container:,nvidia --name "$0" -- "$@")"
+params="$(getopt -o rbdhi:s:c:m: -l run,build,delete,help,image:,source:,container:,mapping:,commit:,rm_container:,nvidia,repo,pull: --name "$0" -- "$@")"
 eval set -- "$params"
 act="run"
 
@@ -199,6 +206,31 @@ while [[ $# -gt 0 ]] ; do
         -d|--delete)
             act="delete"
             ;;
+            
+            
+        --repo)
+            repo=`curl -s http://$opt_registry_server/v2/_catalog`
+            
+            echo "repositories of $opt_registry_server:"
+            echo $repo | python -m json.tool
+            exit 0
+            ;;
+            
+        --pull)
+            if [ -n "$2" ]; then
+                repname=$2
+                shift
+                
+                imagename="${opt_registry_server}/$repname"
+                docker pull $imagename
+                
+                exit 0
+            else
+                print_usage
+                exit -1
+            fi
+            ;;
+
             
         -i|--image)
             if [ -n "$2" ]; then

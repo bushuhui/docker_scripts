@@ -10,6 +10,9 @@
 # FIXME: this script only support LinuxMint (17, 18), and Ubuntu (14.04, 16.04)
 #
 
+# default registry server, please change this to your registry server
+REGISTRY_SERVER='192.168.1.3:5000'
+
 
 ###############################################################################
 # Step 1: remove old docker & install some requirements
@@ -160,6 +163,23 @@ echo ""; echo ""
 echo "请确认看到 --registry-mirror=https://jxus37ad.mirror.aliyuncs.com"
 ps -ef | grep dockerd
 echo ""; echo ""
+
+
+
+# 设置registry server
+reg_settings='{
+    "runtimes": {
+        "nvidia": {
+            "path": "nvidia-container-runtime",
+            "runtimeArgs": []
+        }
+    },
+
+    "insecure-registries":["$REGISTRY_SERVER"]
+}'
+
+echo $reg_settings | tee /etc/docker/daemon.json
+sudo /etc/init.d/docker restart
 
 
 ###############################################################################
