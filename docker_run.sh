@@ -71,10 +71,11 @@ if [[ -z "$included" ]]; then
     opt_rm_container="true"
     # nvidia-docker2 or not
     opt_nvidia_docker2="false"
-    
-    # regitry server address
-    opt_registry_server="192.168.1.3:5000"
 fi
+
+# regitry server address
+opt_registry_server="192.168.1.3:5000"
+
 
 ###############################################################################
 ###############################################################################
@@ -213,6 +214,7 @@ while [[ $# -gt 0 ]] ; do
             
             echo "repositories of $opt_registry_server:"
             echo $repo | python -m json.tool
+            
             exit 0
             ;;
             
