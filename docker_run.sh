@@ -32,6 +32,7 @@ Create/Run/Delete docker container from image
     
     --repo              List registry repositories
     --pull              Pull a registry image
+    --push              Push local image to registry
   
     -h, --help          Display this help and exit.
 
@@ -187,7 +188,7 @@ rm_docker_container()
 ###############################################################################
 
 # parse input arguments
-params="$(getopt -o rbdhi:s:c:m: -l run,build,delete,help,image:,source:,container:,mapping:,commit:,rm_container:,nvidia,repo,pull: --name "$0" -- "$@")"
+params="$(getopt -o rbdhi:s:c:m: -l run,build,delete,help,image:,source:,container:,mapping:,commit:,rm_container:,nvidia,repo,pull:,push: --name "$0" -- "$@")"
 eval set -- "$params"
 act="run"
 
@@ -234,6 +235,21 @@ while [[ $# -gt 0 ]] ; do
             fi
             ;;
 
+        --push)
+            if [ -n "$2" ]; then
+                repname=$2
+                shift
+                
+                imagename="${opt_registry_server}/$repname"
+                docker tag $repname $imagename
+                docker push $imagename
+               
+                exit 0
+            else
+                print_usage
+                exit -1
+            fi
+            ;;
             
         -i|--image)
             if [ -n "$2" ]; then
