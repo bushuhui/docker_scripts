@@ -54,9 +54,9 @@
 docker_run.sh -m "-v `pwd`:/data"
 ```
 
-如果希望将一个给定目录`/mnt/a409`,映射到docker里面的`/a409`则可以这样执行：
+如果希望将一个给定目录`/mnt/a409`,映射到docker里面的`/mnt/a409`则可以这样执行：
 ```
-docker_run.sh -m "-v /mnt/a409:/a409"
+docker_run.sh -m "-v /mnt/a409:/mnt/a409"
 ```
 
 
