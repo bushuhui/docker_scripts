@@ -212,7 +212,7 @@ while [[ $# -gt 0 ]] ; do
         --repo)
             repo=`curl -s http://$opt_registry_server/v2/_catalog`
             
-            echo "repositories of $opt_registry_server:"
+            echo "repositories of $opt_registry_server:"; echo ""
             echo $repo | python -m json.tool
             
             exit 0
