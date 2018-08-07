@@ -225,7 +225,8 @@ while [[ $# -gt 0 ]] ; do
                 
                 imagename="${opt_registry_server}/$repname"
                 docker pull $imagename
-                
+                docker tag $imagename $repname
+               
                 exit 0
             else
                 print_usage
