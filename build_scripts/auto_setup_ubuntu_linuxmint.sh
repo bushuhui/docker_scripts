@@ -39,12 +39,12 @@ echo ""; echo ""
 # Support for Ubuntu
 ubuntu_repo_mirror="https://mirrors.tuna.tsinghua.edu.cn/ubuntu/"
 
-ubuntu_repo_setting='deb ${ubuntu_repo_mirror} ${SYS_TYPE} main restricted universe multiverse\n
+ubuntu_repo_setting="deb ${ubuntu_repo_mirror} ${SYS_TYPE} main restricted universe multiverse\n
 deb ${ubuntu_repo_mirror} ${SYS_TYPE}-updates main restricted universe multiverse\n
 deb ${ubuntu_repo_mirror} ${SYS_TYPE}-backports main restricted universe multiverse\n
 \n
 deb http://security.ubuntu.com/ubuntu/ ${SYS_TYPE}-security main restricted universe multiverse\n
-deb http://archive.canonical.com/ubuntu/ ${SYS_TYPE} partner\n'
+deb http://archive.canonical.com/ubuntu/ ${SYS_TYPE} partner\n"
 
 # Ubuntu 16.04 (xenial); 14.04 (trusty) 
 list_ubuntu="xenial trusty"
@@ -77,11 +77,11 @@ for i in $list_trusty; do
     fi
 done
 
-linuxmint_repo_settings="deb http://mirrors.ustc.edu.cn/linuxmint $SYS_TYPE main upstream import backport\n
+linuxmint_repo_settings="deb ${linuxmint_repo_mirror} $SYS_TYPE main upstream import backport\n
 \n
-deb http://mirrors.cqu.edu.cn/ubuntu ${linuxmint_base} main restricted universe multiverse\n
-deb http://mirrors.cqu.edu.cn/ubuntu ${linuxmint_base}-updates main restricted universe multiverse\n
-deb http://mirrors.cqu.edu.cn/ubuntu ${linuxmint_base}-backports main restricted universe multiverse\n
+deb ${ubuntu_repo_mirror} ${linuxmint_base} main restricted universe multiverse\n
+deb ${ubuntu_repo_mirror} ${linuxmint_base}-updates main restricted universe multiverse\n
+deb ${ubuntu_repo_mirror} ${linuxmint_base}-backports main restricted universe multiverse\n
 \n
 deb http://security.ubuntu.com/ubuntu/ ${linuxmint_base}-security main restricted universe multiverse\n
 deb http://archive.canonical.com/ubuntu/ ${linuxmint_base} partner\n"
