@@ -66,7 +66,7 @@ done
 
 # Ubuntu 14.04 (trusty); LinuxMint 17.3 (rosa), 17.2 (rafaela), 17.1 (rebecca), 17 (qiana)
 list_trusty="trusty rosa rafaela rebecca qiana"
-for i in list_trusty; do 
+for i in $list_trusty; do 
     if [[ "$SYS_TYPE" = "$i" ]]; then
         sudo add-apt-repository "deb [arch=amd64] https://mirrors.aliyun.com/docker-ce/linux/ubuntu trusty stable"
         
