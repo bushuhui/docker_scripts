@@ -175,10 +175,10 @@ reg_settings='{
         }
     },
 
-    "insecure-registries":["$REGISTRY_SERVER"]
+    "insecure-registries":["'$REGISTRY_SERVER'"]
 }'
 
-echo $reg_settings | tee /etc/docker/daemon.json
+echo $reg_settings | sudo tee /etc/docker/daemon.json
 sudo /etc/init.d/docker restart
 
 
