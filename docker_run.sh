@@ -19,8 +19,8 @@ Usage:
         [--repo] [--pull]
         [-i IMAGE] [-s SOURCE IMAGE] [-c CONTAINER] 
         [-m PATH_MAPPING]
-        [--commit true/false] 
-        [--rm_container true/false]
+        [--auto_commit true/false] 
+        [--auto_rm_container true/false]
         [--nvidia]
 
 Create/Run/Delete docker container from image
@@ -29,6 +29,8 @@ Create/Run/Delete docker container from image
     -r, --run           Run the container
     -b, --build         Build a docker image from given image
     -d, --delete        Delete a docker container
+    
+    --commit            Commit the container to image
     
     --repo              List registry repositories
     --pull              Pull a registry image
@@ -41,8 +43,8 @@ Create/Run/Delete docker container from image
     -s, --source        Required. Set the source image
     -c, --container     Required. Set the container name
     -m, --mapping       Required. Path mapping (host<->docker)
-    --commit            Auto commit docker container to image (Default: true)
-    --rm_container      Auto remove docker container (Default: true)
+    --auto_commit       Auto commit docker container to image (Default: true)
+    --auto_rm_container Auto remove docker container (Default: true)
     --nvidia            Run as nvidia-docker2 (Default: not set)
     
 EOF
@@ -67,9 +69,9 @@ if [[ -z "$included" ]]; then
 
 
     # commit docker container to image
-    opt_commit_dockerimage="true"
+    opt_auto_commit_dockerimage="true"
     # auto remove docker container
-    opt_rm_container="true"
+    opt_auto_rm_container="true"
     # nvidia-docker2 or not
     opt_nvidia_docker2="false"
 fi
@@ -121,7 +123,7 @@ build_docker_image()
     docker commit $docker_container $docker_image
     
     # auto rm docker container
-    if [[ "$opt_rm_container" = "true" ]]; then
+    if [[ "$opt_auto_rm_container" = "true" ]]; then
         docker rm $docker_container
     fi
 }
@@ -151,12 +153,12 @@ run_docker_container()
             bash
 
         # commit docker container to image
-        if [[ "$opt_commit_dockerimage" = "true" ]]; then
+        if [[ "$opt_auto_commit_dockerimage" = "true" ]]; then
             docker commit $docker_container $docker_image
         fi
         
         # auto rm docker container
-        if [[ "$opt_rm_container" = "true" ]]; then
+        if [[ "$opt_auto_rm_container" = "true" ]]; then
             docker rm $docker_container
         fi
     else
@@ -174,7 +176,7 @@ rm_docker_container()
     C=`docker ps -a | grep $docker_container`
     if [[ -n "$C" ]]; then
         # commit docker container to image
-        if [[ "$opt_commit_dockerimage" = "true" ]]; then
+        if [[ "$opt_auto_commit_dockerimage" = "true" ]]; then
             docker commit $docker_container $docker_image
         fi
         
@@ -183,12 +185,20 @@ rm_docker_container()
     fi
 }
 
+# commit docker container to image
+commit_docker_container()
+{
+    echo ">>> Commit a docker container [$docker_container] -> image [$docker_image]"; echo ""
+    
+    docker commit $docker_container $docker_image
+} 
+
 
 ###############################################################################
 ###############################################################################
 
 # parse input arguments
-params="$(getopt -o rbdhi:s:c:m: -l run,build,delete,help,image:,source:,container:,mapping:,commit:,rm_container:,nvidia,repo,pull:,push: --name "$0" -- "$@")"
+params="$(getopt -o rbdhi:s:c:m: -l run,build,delete,help,image:,source:,container:,mapping:,auto_commit:,auto_rm_container:,nvidia,repo,pull:,push:,commit --name "$0" -- "$@")"
 eval set -- "$params"
 act="run"
 
@@ -207,6 +217,10 @@ while [[ $# -gt 0 ]] ; do
             ;;
         -d|--delete)
             act="delete"
+            ;;
+            
+        --commit)
+            act="commit"
             ;;
             
             
@@ -275,15 +289,15 @@ while [[ $# -gt 0 ]] ; do
                 shift
             fi
             ;;
-        --commit)
+        --auto_commit)
             if [ -n "$2" ]; then
-                opt_commit_dockerimage=$2
+                opt_auto_commit_dockerimage=$2
                 shift
             fi            
             ;;
-        --rm_container)
+        --auto_rm_container)
             if [ -n "$2" ]; then
-                opt_rm_container=$2
+                opt_auto_rm_container=$2
                 shift
             fi
             ;;
@@ -304,14 +318,14 @@ fi
 #DEBUG="true"
 if [[ "$DEBUG" = "true" ]]; then
 echo ">>> Parameters:"
-echo "  image_from              : $image_from"
-echo "  docker_image            : $docker_image"
-echo "  docker_container        : $docker_container"
+echo "  image_from                  : $image_from"
+echo "  docker_image                : $docker_image"
+echo "  docker_container            : $docker_container"
 echo ""
-echo "  path_mapping            : $path_mapping"
-echo "  opt_commit_dockerimage  : $opt_commit_dockerimage"
-echo "  opt_rm_container        : $opt_rm_container"
-echo "  opt_nvidia_docker2      : $opt_nvidia_docker2"
+echo "  path_mapping                : $path_mapping"
+echo "  opt_auto_commit_dockerimage : $opt_auto_commit_dockerimage"
+echo "  opt_auto_rm_container       : $opt_auto_rm_container"
+echo "  opt_nvidia_docker2          : $opt_nvidia_docker2"
 echo ""
 fi
 
@@ -320,5 +334,6 @@ case $act in
     build)  build_docker_image;;
     run)    run_docker_container;;
     delete) rm_docker_container;;
+    commit) commit_docker_container;;
 esac
 
