@@ -13,6 +13,11 @@
 
 如果希望在docker使用nvidia显卡，则需要安装nvidia-docker2，可以执行`./docker_install_nvidia-docker2.sh`
 
+
+由于安装过程需要比较多网络操作，这些步骤很有可能使用脚本执行会有问题，所以需要根据问题仔细分析问题。如果遇到问题，可以查看`docker_install.sh`里面详细的解释。或者查看 [SummerCamp的docker教程](http://192.168.1.3/PI_LAB/SummerCamp2018/blob/master/tool/docker/content/install.md)。 
+
+
+
 ## 2. 创建一个docker镜像
 
 由于`docker build`需要网络访问，所以网络上大多数教程的例子无法使用（可能是我的那个配置没有搞对）。**所以构建一个交互的docker，在环境里面进行安装软件等操作**。
@@ -150,7 +155,7 @@ alias docker_run_ubuntu_dev='/script_path/docker_run.sh -i ubuntu_dev -m "-v /ho
 ```
 export docker_run='/home/ubuntu/share/docker/docker_scripts/docker_run.sh'
 ```
-这个意思是将`docker_run`变量设置成 `/home/ubuntu/share/docker/docker_scripts/docker_run.sh`，这样可以在命令行输入`$docker_run -i ubuntu_test`来快速执行docker image （ubuntu_test)
+这个意思是将`docker_run`变量设置成 `/home/ubuntu/share/docker/docker_scripts/docker_run.sh`，这样可以在命令行输入`$docker_run -i ubuntu_test`来快速执行“ubuntu_test”的docker镜像。
 
 
 也可以在`～/.bashrc`中设置
@@ -205,5 +210,15 @@ $ ./docker_run.sh --pull ubuntu_gl
 # 如何参考本地的镜像文件, 通过 docker images 能够列出本地的镜像
 $ docker images
 
-
+$ ./docker_run.sh --push pytorch_dev
 ```
+
+
+## 5. 实验室已经安装的镜像的说明：
+
+* `ubuntu_dev`: Ubuntu 16.04基础开发环境，安装了大多数的软件包，apt镜像已经设置成国内服务器
+* `machinelearning`: 机器学习，操作系统是Ubuntu 16.04，安装了python, pytorch (0.4), scikit-learn等机器学习，支持nvidia 
+* `pytorch`: 机器学习pytorch的镜像，操作系统是Ubuntu 16.04，安装了pytorch (0.4)，支持nvidia 
+
+
+可以使用`ubuntu_dev`来制作CV方面的镜像，使用`machinelearning`来制作机器学习方面的镜像
