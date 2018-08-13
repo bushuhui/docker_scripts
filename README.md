@@ -4,37 +4,37 @@
 主要包含的工具有：
 * `docker_install.sh`: 安装docker到系统，并设置aliyun的镜像，直接以当前用户执行即可，如果有问题可以打开这个脚本看看里面的说明
 * `docker_install_nvidia-docker2.sh`: 安装nvidia-docker2
-* `docker_saveImage.sh`: 将docker image 或者 continer保存到本地文件
-* `docker_loadImage.sh`: 将本地文件恢复到docker系统
-* `docker_run.sh`: 创建/运行/删除docker执行环境
+* `docker_run.sh`: 简易好用的创建/运行/删除docker等工具
 
 ## 1. 安装docker
-直接执行`./docker_install.sh`就可以，如果有问题，在 http://192.168.1.3/PI_LAB/docker_scripts/issues 反馈意见
+直接执行`./docker_install.sh`就可以，**如果有问题，在 http://192.168.1.3/PI_LAB/docker_scripts/issues 反馈意见**
 
-如果希望在docker使用nvidia显卡，则需要安装nvidia-docker2，可以执行`./docker_install_nvidia-docker2.sh`
+如果希望在docker使用nvidia显卡，则需要安装`nvidia-docker2`，可以执行`./docker_install_nvidia-docker2.sh`
 
 
-由于安装过程需要比较多网络操作，这些步骤很有可能使用脚本执行会有问题，所以需要根据问题仔细分析问题。如果遇到问题，可以查看`docker_install.sh`里面详细的解释。或者查看 [SummerCamp的docker教程](http://192.168.1.3/PI_LAB/SummerCamp2018/blob/master/tool/docker/content/install.md)。 
+由于安装过程需要比较多网络操作，这些步骤很有可能使用脚本执行会有问题，所以需要根据问题仔细分析问题。如果遇到问题，可以查看`docker_install.sh`里面详细的解释，或者查看 [SummerCamp的docker教程](http://192.168.1.3/PI_LAB/SummerCamp2018/blob/master/tool/docker/content/install.md)。 
 
 
 
 ## 2. 创建一个docker镜像
 
-由于`docker build`需要网络访问，所以网络上大多数教程的例子无法使用（可能是我的那个配置没有搞对）。**所以构建一个交互的docker，在环境里面进行安装软件等操作**。
+由于`docker build`需要网络访问，所以网络上大多数教程的例子无法使用（可能是我的那个配置没有搞对）。**所以构建一个交互的docker，在环境里面执行脚本或者通过命令行安装软件等操作**。
 
 
 需要将Dockerfile稍微改造一下，写成shell脚本，例如原来的安装pytorch的Dockerfile脚本`Dockerfile_pytorch`是：
 ```
+FROM phusion/baseimage
+
 ## install pytorch
 
 # update source list
-cp ubuntu_16.04_sources_cn.list /etc/apt/sources.list
-cp dot.vimrc /root/.vimrc
+COPY ubuntu_16.04_sources_cn.list /etc/apt/sources.list
+COPY dot.vimrc /root/.vimrc
 
 
 # Install dependencies
-apt-get update -y
-apt-get install software-properties-common -y
+RUN apt-get update -y
+RUN apt-get install software-properties-common -y
 
 # All packages (Will install much faster)
 RUN apt-get install --no-install-recommends -y git cmake python-pip build-essential 
@@ -87,15 +87,17 @@ pip3 install torchvision
 #   -s                  从那个docker image所谓初始的镜像 （默认是 ubuntu）
 #   -m                  本地文件和docker文件分享的设置 （不是必须，默认是/home:/home 脚本的目录:/data
 
+# 此命令中的 -i ubuntu_test 意思是新建的docker image名字是`ubuntu_test`
+#          -s ubuntu_dev 意思是源image是`ubuntu_dev`
 ./docker_run.sh -b -i ubuntu_test -s ubuntu_dev
 ```
 
 本次的例子是：
 ```
 cd build_scripts
-../docker_run.sh -b -i pytorch_test -s ubuntu_dev -m "-v `pwd`:/data" 
+../docker_run.sh -b -i pytorch_test -s ubuntu_dev
 
-# 这是会进入docker的环境，然后进入docker里面的映射目录 /data
+# 这时会进入docker的环境，然后进入docker里面的映射目录 /data
 cd /data
 
 # 然后执行安装pytorch的脚本
@@ -108,7 +110,7 @@ cd /data
 
 ## 3. 运行一个docker镜像
 
-为了能够使用图形化的程序，使用`docker_run.sh`能够自动设置一些常用的配置
+为了能够使用**图形化的程序**，使用`docker_run.sh`能够自动设置一些常用的配置
 
 具体的使用方法为：
 ```
@@ -118,11 +120,15 @@ cd /data
 #   -m                  本地文件和docker文件分享的设置 （不是必须，默认是/home:/home 脚本的目录:/data
 #   --nvidia            是否使用nvidia-docker2
 
-./docker_run.sh -r -i ubuntu_test
+./docker_run.sh -i ubuntu_test
 ```
 
-执行命令之后，会进入交互命令环境，如果按`ctrl-d`推出docker运行之后，会自动将container内容提交到docker image，并删除container。
+执行命令之后，会进入交互命令环境，如果按`ctrl-d`会退出docker运行环境
 
+**如果希望能够保存所运行的container**，则可以执行
+```
+./docker_run.sh --commit -i ubuntu_test
+```
 
 ### 3.1 关于`-m`本地文件和docker文件分享的设置
 * 其中的`-v`表示一个目录映射
@@ -150,8 +156,18 @@ docker_run.sh -m "-v /mnt/a409:/mnt/a409"
 alias docker_run_ubuntu_dev='/script_path/docker_run.sh -i ubuntu_dev -m "-v /home:/home -v /mnt/a409:/a409"'
 ```
 
+也可以加入一个`docker_run`的变量在`~/.bashrc`中，从而快速执行这个脚本，例如
+```
+export docker_run='/script_path/docker_run.sh'
+```
+
+关闭终端，然后在打开，就可以通过`$docker_run`来快速执行这个脚本
+```
+$docker_run -h
+```
+
 ### 3.3 GPU服务器（192.168.1.158）上的设置
-在GPU服务器（192.168.1.158）上的`~/.bashrc` （/home/ubuntu/.bashrc）中设置了
+在GPU服务器（`192.168.1.158`）上的`~/.bashrc` （/home/ubuntu/.bashrc）中设置了
 ```
 export docker_run='/home/ubuntu/share/docker/docker_scripts/docker_run.sh'
 ```
@@ -170,7 +186,7 @@ alias docker_pytorch_liqing="$docker_run -i pytorch_liqing -m '-v /mnt/a409:/mnt
 
 ## 4. docker镜像仓库的使用
 
-本地修改后的镜像可以通过`docker_run.sh push`到本地的仓库，方便大家分享。具体使用方法可以参考[docker registry usage](docs/docker_registry.md)
+本地修改后的镜像可以通过`docker_run.sh --push`到本地的仓库，方便大家分享。具体使用方法可以参考[docker registry usage](docs/docker_registry.md)
 
 本地使用的仓库没有https，所以需要在`/etc/docker/daemon.json`中确保有：`"insecure-registries":["192.168.1.3:5000"]`，否则无法正确访问。
 
@@ -222,3 +238,7 @@ $ ./docker_run.sh --push pytorch_dev
 
 
 可以使用`ubuntu_dev`来制作CV方面的镜像，使用`machinelearning`来制作机器学习方面的镜像
+
+
+## 6. 如何快速安装一个操作系统
+可以执行`build_scripts/auto_setup_ubuntu_linuxmint.sh`来安装常用软件，并自动设置国内的apt软件源。目前该脚本支持Ubuntu 16.04, 14.04； LinuxMint 17, 18

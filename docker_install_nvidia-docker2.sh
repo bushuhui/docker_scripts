@@ -14,6 +14,14 @@
 SCRIPT=$(readlink -f "$0")
 CUR_DIR=$(dirname "$SCRIPT")
 
+###############################################################################
+# Step 0: Install nvidia driver & cuda
+###############################################################################
+echo ""; echo ""
+echo ">>> Step 0: Please install Nvidia driver & cuda correctly ..."
+echo "     pleaes see the document for download & install: https://developer.nvidia.com/cuda-downloads "
+echo ""; echo ""
+
 
 ###############################################################################
 # Step 1: check docker installed?
@@ -76,7 +84,25 @@ sudo apt-get update
 
 
 sudo apt-get install -y nvidia-docker2
-sudo pkill -SIGHUP dockerd
+
+
+# 设置registry server
+#   default registry server, please change this to your registry server
+REGISTRY_SERVER='192.168.1.3:5000'
+
+reg_settings='{
+    "runtimes": {
+        "nvidia": {
+            "path": "nvidia-container-runtime",
+            "runtimeArgs": []
+        }
+    },
+
+    "insecure-registries":["'$REGISTRY_SERVER'"]
+}'
+
+echo $reg_settings | sudo tee /etc/docker/daemon.json
+sudo /etc/init.d/docker restart
 
 
 ###############################################################################
