@@ -55,7 +55,7 @@ Create/Run/Delete docker container from image
     --auto_commit       Auto commit docker container to image (Default: false)
     --auto_rm_container Auto remove docker container (Default: false)
     --nvidia            Run as nvidia-docker2 (Default: not set)
-    --cmd               Required. The command which container will run
+    --cmd               Required. The command which container will run (Default: bash)
     
 EOF
 }

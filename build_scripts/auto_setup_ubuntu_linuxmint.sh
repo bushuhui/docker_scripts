@@ -35,69 +35,71 @@ echo ""; echo ""
 echo "System code name: $SYS_TYPE"
 echo ""; echo ""
 
+SETUP_MIRROR="0"
 
-# Support for Ubuntu
-ubuntu_repo_mirror="https://mirrors.tuna.tsinghua.edu.cn/ubuntu/"
+if [[ $SETUP_MIRROR == "1" ]]; then
+    # Support for Ubuntu
+    ubuntu_repo_mirror="https://mirrors.tuna.tsinghua.edu.cn/ubuntu/"
 
-ubuntu_repo_setting="deb ${ubuntu_repo_mirror} ${SYS_TYPE} main restricted universe multiverse\n
-deb ${ubuntu_repo_mirror} ${SYS_TYPE}-updates main restricted universe multiverse\n
-deb ${ubuntu_repo_mirror} ${SYS_TYPE}-backports main restricted universe multiverse\n
-\n
-deb http://security.ubuntu.com/ubuntu/ ${SYS_TYPE}-security main restricted universe multiverse\n
-deb http://archive.canonical.com/ubuntu/ ${SYS_TYPE} partner\n"
+    ubuntu_repo_setting="deb ${ubuntu_repo_mirror} ${SYS_TYPE} main restricted universe multiverse\n
+    deb ${ubuntu_repo_mirror} ${SYS_TYPE}-updates main restricted universe multiverse\n
+    deb ${ubuntu_repo_mirror} ${SYS_TYPE}-backports main restricted universe multiverse\n
+    \n
+    deb http://security.ubuntu.com/ubuntu/ ${SYS_TYPE}-security main restricted universe multiverse\n
+    deb http://archive.canonical.com/ubuntu/ ${SYS_TYPE} partner\n"
 
-# Ubuntu 16.04 (xenial); 14.04 (trusty) 
-list_ubuntu="xenial trusty"
-for i in $list_ubuntu; do 
-    if [[ "$SYS_TYPE" = "$i" ]]; then
-        plist="/etc/apt/sources.list"
+    # Ubuntu 16.04 (xenial); 14.04 (trusty) 
+    list_ubuntu="xenial trusty"
+    for i in $list_ubuntu; do 
+        if [[ "$SYS_TYPE" = "$i" ]]; then
+            plist="/etc/apt/sources.list"
+            
+            $SUDO cp ${plist} ${plist}.backup
+            echo -e $ubuntu_repo_setting | $SUDO tee ${plist}
+        fi
+    done
+
+    # Support for Linux Mint
+    linuxmint_repo_mirror="https://mirrors.tuna.tsinghua.edu.cn/linuxmint/"
+
+    linuxmint_base=""
+    # LinuxMint 18.3 (sylvia), 18.2 (sonya), 18.1 (serena), 18 (sarah)
+    list_xenial="sylvia sonya serena sarah"
+    for i in $list_xenial; do 
+        if [[ "$SYS_TYPE" = "$i" ]]; then
+            linuxmint_base="xenial"
+        fi
+    done
+
+    # LinuxMint 17.3 (rosa), 17.2 (rafaela), 17.1 (rebecca), 17 (qiana)
+    list_trusty="rosa rafaela rebecca qiana"
+    for i in $list_trusty; do 
+        if [[ "$SYS_TYPE" = "$i" ]]; then
+            linuxmint_base="trusty"
+        fi
+    done
+
+    linuxmint_repo_settings="deb ${linuxmint_repo_mirror} $SYS_TYPE main upstream import backport\n
+    \n
+    deb ${ubuntu_repo_mirror} ${linuxmint_base} main restricted universe multiverse\n
+    deb ${ubuntu_repo_mirror} ${linuxmint_base}-updates main restricted universe multiverse\n
+    deb ${ubuntu_repo_mirror} ${linuxmint_base}-backports main restricted universe multiverse\n
+    \n
+    deb http://security.ubuntu.com/ubuntu/ ${linuxmint_base}-security main restricted universe multiverse\n
+    deb http://archive.canonical.com/ubuntu/ ${linuxmint_base} partner\n"
+
+    if [[ -n "$linuxmint_base" ]]; then
+        plist="/etc/apt/sources.list.d/official-package-repositories.list"
         
-        $SUDO cp ${plist} ${plist}.backup
-        echo -e $ubuntu_repo_setting | $SUDO tee ${plist}
+        $SUDO cp $plist ${plist}.backup
+        echo -e $linuxmint_repo_settings | $SUDO tee $plist
     fi
-done
 
-# Support for Linux Mint
-linuxmint_repo_mirror="https://mirrors.tuna.tsinghua.edu.cn/linuxmint/"
 
-linuxmint_base=""
-# LinuxMint 18.3 (sylvia), 18.2 (sonya), 18.1 (serena), 18 (sarah)
-list_xenial="sylvia sonya serena sarah"
-for i in $list_xenial; do 
-    if [[ "$SYS_TYPE" = "$i" ]]; then
-        linuxmint_base="xenial"
-    fi
-done
-
-# LinuxMint 17.3 (rosa), 17.2 (rafaela), 17.1 (rebecca), 17 (qiana)
-list_trusty="rosa rafaela rebecca qiana"
-for i in $list_trusty; do 
-    if [[ "$SYS_TYPE" = "$i" ]]; then
-        linuxmint_base="trusty"
-    fi
-done
-
-linuxmint_repo_settings="deb ${linuxmint_repo_mirror} $SYS_TYPE main upstream import backport\n
-\n
-deb ${ubuntu_repo_mirror} ${linuxmint_base} main restricted universe multiverse\n
-deb ${ubuntu_repo_mirror} ${linuxmint_base}-updates main restricted universe multiverse\n
-deb ${ubuntu_repo_mirror} ${linuxmint_base}-backports main restricted universe multiverse\n
-\n
-deb http://security.ubuntu.com/ubuntu/ ${linuxmint_base}-security main restricted universe multiverse\n
-deb http://archive.canonical.com/ubuntu/ ${linuxmint_base} partner\n"
-
-if [[ -n "$linuxmint_base" ]]; then
-    plist="/etc/apt/sources.list.d/official-package-repositories.list"
-    
-    $SUDO cp $plist ${plist}.backup
-    echo -e $linuxmint_repo_settings | $SUDO tee $plist
+    # update package lists
+    $SUDO apt-get update
+    $SUDO apt-get upgrade -y
 fi
-
-
-# update package lists
-$SUDO apt-get update
-$SUDO apt-get upgrade -y
-
 
 
 ################################################################################
@@ -144,18 +146,13 @@ $install_command qtcreator qtcreator-plugin-cmake qtcreator-plugin-valgrind
 $install_command liblapack-dev liblapack3 liblapacke-dev libeigen3-dev liblapack-pic
 $install_command libsuitesparse-dev
 
-$install_command beignet-dev nvidia-opencl-dev libclc-dev libopentk-cil-dev
-
 $install_command libboost-all-dev
 $install_command python-numpy python-fftw python-scipy python-scientific python-scitools
-$install_command gnuplot-x11
 $install_command libglew-dev glew-utils
 $install_command libgomp1
 
 $install_command libv4l-dev qv4l2 v4l-utils
 $install_command libdc1394-22-dev libdc1394-utils
-
-$install_command libgstreamer1.0-dev
 
 $install_command libavformat-dev libavcodec-dev libavutil-dev libswscale-dev
 
